@@ -5,6 +5,7 @@ import (
 	"github.com/showurl/zeroapi/examples/hello/internal/middleware"
 	"github.com/showurl/zeroapi/examples/hello/pb"
 	"github.com/zeromicro/go-zero/rest"
+	"log"
 	"net/http"
 )
 
@@ -30,5 +31,6 @@ func (s *StreamGreeterServer) Gateway() {
 	}))
 	svr.Use(middleware.PrintLog)
 	defer svr.Stop()
+	log.Println("gateway is started at 0.0.0.0:", s.svcCtx.Config.Gateway.Port)
 	svr.Start()
 }

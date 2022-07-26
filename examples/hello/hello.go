@@ -25,6 +25,7 @@ func main() {
 	conf.MustLoad(*configFile, &c)
 	ctx := svc.NewServiceContext(c)
 	svr := server.NewStreamGreeterServer(ctx)
+	go svr.Gateway()
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
 		pb.RegisterStreamGreeterServer(grpcServer, svr)

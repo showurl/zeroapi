@@ -13,14 +13,10 @@ func getHeader(ctx context.Context) metadata.MD {
 	return incomingContext
 }
 
-func getValueByKey(ctx context.Context, key string) (value string) {
+func GetValueByKey(ctx context.Context, key string) (value string) {
 	strings := getHeader(ctx).Get(key)
 	if len(strings) > 0 {
 		value = strings[0]
 	}
 	return
-}
-
-func GetUserIdFromCtx(ctx context.Context) string {
-	return getValueByKey(ctx, "user_id")
 }

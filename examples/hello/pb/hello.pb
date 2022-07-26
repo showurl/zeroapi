@@ -8,4 +8,4 @@
 StreamResp
 greet (	Rgreet27
 StreamGreeter&
-greet.pb.StreamReq.pb.StreamRespBZ./pbbproto3
+Greet.pb.StreamReq.pb.StreamRespBZ./pbbproto3

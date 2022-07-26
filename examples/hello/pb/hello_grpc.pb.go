@@ -35,7 +35,7 @@ func NewStreamGreeterClient(cc grpc.ClientConnInterface) StreamGreeterClient {
 
 func (c *streamGreeterClient) Greet(ctx context.Context, in *StreamReq, opts ...grpc.CallOption) (*StreamResp, error) {
 	out := new(StreamResp)
-	err := c.cc.Invoke(ctx, "/pb.StreamGreeter/greet", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/pb.StreamGreeter/Greet", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func _StreamGreeter_Greet_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pb.StreamGreeter/greet",
+		FullMethod: "/pb.StreamGreeter/Greet",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(StreamGreeterServer).Greet(ctx, req.(*StreamReq))
@@ -96,7 +96,7 @@ var StreamGreeter_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*StreamGreeterServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "greet",
+			MethodName: "Greet",
 			Handler:    _StreamGreeter_Greet_Handler,
 		},
 	},

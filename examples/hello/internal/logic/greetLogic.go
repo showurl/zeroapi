@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"github.com/showurl/zeroapi"
 
 	"github.com/showurl/zeroapi/examples/hello/internal/svc"
 	"github.com/showurl/zeroapi/examples/hello/pb"
@@ -24,7 +25,5 @@ func NewGreetLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GreetLogic 
 }
 
 func (l *GreetLogic) Greet(in *pb.StreamReq) (*pb.StreamResp, error) {
-	// todo: add your logic here and delete this line
-
-	return &pb.StreamResp{}, nil
+	return &pb.StreamResp{Greet: zeroapi.GetValueByKey(l.ctx, "User-Agent")}, nil
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/fullstorydev/grpcurl"
 	"github.com/golang/protobuf/proto" //lint:ignore SA1019 we have to import this because it appears in exported API
+	"github.com/jhump/protoreflect/dynamic"
 	"github.com/showurl/zeroapi/xhttp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -14,9 +15,6 @@ import (
 )
 
 type ResponseHandler func(in proto.Message) (code int, msg string, data interface{})
-type iFailedReason interface {
-	GetFailedReason() string
-}
 
 type handlerOption struct {
 	responseHandler ResponseHandler
@@ -76,9 +74,12 @@ func (h *Handler) defaultResponseHandler(in proto.Message) (code int, msg string
 	if in == nil {
 		return 0, "", nil
 	} else {
-		if failed, ok := in.(iFailedReason); ok {
-			if failed.GetFailedReason() != "" {
-				return -1, failed.GetFailedReason(), nil
+		message, ok := in.(*dynamic.Message)
+		if ok {
+			if failedReason := message.GetFieldByName("failedReason"); failedReason != nil {
+				if s, ok := failedReason.(string); ok && s != "" {
+					return -1, s, nil
+				}
 			}
 		}
 		return 0, "", in

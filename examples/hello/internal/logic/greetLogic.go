@@ -3,6 +3,8 @@ package logic
 import (
 	"context"
 	"github.com/showurl/zeroapi"
+	"math/rand"
+	"time"
 
 	"github.com/showurl/zeroapi/examples/hello/internal/svc"
 	"github.com/showurl/zeroapi/examples/hello/pb"
@@ -25,5 +27,10 @@ func NewGreetLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GreetLogic 
 }
 
 func (l *GreetLogic) Greet(in *pb.StreamReq) (*pb.StreamResp, error) {
-	return &pb.StreamResp{Greet: zeroapi.GetValueByKey(l.ctx, "User-Agent")}, nil
+	failedReason := ""
+	rand.Seed(time.Now().UnixNano())
+	if rand.Intn(2) == 0 {
+		failedReason = "随机失败"
+	}
+	return &pb.StreamResp{Greet: zeroapi.GetValueByKey(l.ctx, "User-Agent"), FailedReason: failedReason}, nil
 }

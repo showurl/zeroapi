@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package pb;
+option go_package = "./pb";
+import "common.proto";
+
+message StreamReq {
+  string name = 1;
+  CommonReq common = 2;
+}
+
+message StreamResp {
+  string greet = 1;
+}
+
+service StreamGreeter {
+  rpc greet(StreamReq) returns (StreamResp);
+}

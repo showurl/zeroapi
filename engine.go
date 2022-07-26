@@ -1,4 +1,4 @@
-package gateway
+package zeroapi
 
 import (
 	"github.com/zeromicro/go-zero/rest"

@@ -5,8 +5,9 @@ option go_package = "./pb";
 import "common.proto";
 
 message StreamReq {
-  string name = 1;
-  CommonReq common = 2;
+  string ip = 1;
+  string name = 2;
+  CommonReq common = 3;
 }
 
 message StreamResp {

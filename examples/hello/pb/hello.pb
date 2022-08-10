@@ -1,9 +1,10 @@
 
-ø
-hello.protopbcommon.proto"F
-	StreamReq
-name (	Rname%
-common (2.pb.CommonReqRcommon"F
+ˆ
+hello.protopbcommon.proto"V
+	StreamReq
+ip (	Rip
+name (	Rname%
+common (2.pb.CommonReqRcommon"F
 
 StreamResp
 greet (	Rgreet"

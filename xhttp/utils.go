@@ -3,7 +3,8 @@ package xhttp
 import "net/http"
 
 const (
-	maxMemory = 32 << 20 // 32MB
+	xForwardedFor = "X-Forwarded-For"
+	maxMemory     = 32 << 20 // 32MB
 )
 
 // GetFormValues returns the form values.
@@ -27,4 +28,25 @@ func GetFormValues(r *http.Request) (map[string]interface{}, error) {
 	}
 
 	return params, nil
+}
+
+// GetRemoteAddr returns the peer address, supports X-Forward-For.
+func GetRemoteAddr(r *http.Request) string {
+	v := r.Header.Get(xForwardedFor)
+	if len(v) > 0 {
+		return v
+	}
+
+	return r.RemoteAddr
+}
+
+func GetRequestIP(r *http.Request) string {
+	addr := GetRemoteAddr(r)
+	if addr == "" {
+		realIp := r.Header.Get("X-Real-IP")
+		if realIp != "" {
+			return realIp
+		}
+	}
+	return addr
 }

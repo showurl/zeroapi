@@ -3,6 +3,7 @@ package zeroapi
 import (
 	"github.com/zeromicro/go-zero/rest"
 	"github.com/zeromicro/go-zero/zrpc"
+	"net/http"
 	"path"
 	"strings"
 	"time"
@@ -10,11 +11,12 @@ import (
 
 type (
 	GatewayEngine struct {
-		RestConf  rest.RestConf
-		Config    Config
-		prefix    string
-		router    *router
-		ProtoSets [][]byte
+		RestConf    rest.RestConf
+		Config      Config
+		prefix      string
+		router      *router
+		ProtoSets   [][]byte
+		middlewares []rest.Middleware
 	}
 	router struct {
 		routers []RouteMapping
@@ -30,7 +32,7 @@ func (r *router) add(s string, url string, rpcPath string, fs ...OptionFunc) {
 	})
 }
 
-func Engine(restConf rest.RestConf, conf Config, protoSets [][]byte) *GatewayEngine {
+func Engine(restConf rest.RestConf, conf Config, protoSets ...[]byte) *GatewayEngine {
 	return &GatewayEngine{
 		RestConf:  restConf,
 		Config:    conf,
@@ -39,11 +41,30 @@ func Engine(restConf rest.RestConf, conf Config, protoSets [][]byte) *GatewayEng
 	}
 }
 
-func (e *GatewayEngine) Server(opts ...Option) *Server {
+func (e *GatewayEngine) Use(middlewares ...rest.Middleware) {
+	e.middlewares = append(e.middlewares, middlewares...)
+}
+
+func (e *GatewayEngine) Server(serverOptions ...rest.RunOption) *Server {
+	var opts []Option
+	opts = append(opts, WithHeaderProcessor(func(header http.Header) []string {
+		return []string{
+			"User-Agent:" + header.Get("User-Agent"),
+			"X-Forwarded-For:" + header.Get("X-Forwarded-For"),
+			"X-Real-IP:" + header.Get("X-Real-IP"),
+			"app-version:" + header.Get("app-version"),
+			"platform:" + header.Get("platform"),
+			"user_id:" + header.Get("user_id"),
+			"token:" + header.Get("token"),
+		}
+	}))
 	svr := &Server{
-		Server:    rest.MustNewServer(e.RestConf),
-		upstreams: e.upstreams(),
+		Server:    rest.MustNewServer(e.RestConf, serverOptions...),
+		upstreams: e.Upstreams(),
 		timeout:   time.Duration(e.Config.CallRpcTimeoutSeconds) * time.Second,
+	}
+	for _, middleware := range e.middlewares {
+		svr.Use(middleware)
 	}
 	for _, opt := range opts {
 		opt(svr)
@@ -87,7 +108,7 @@ func (e *GatewayEngine) PATCH(url string, handler interface{}, optionFs ...Optio
 	e.router.add("patch", e.formatPrefix(url), rpcPath, optionFs...)
 }
 
-func (e *GatewayEngine) upstreams() []upstream {
+func (e *GatewayEngine) Upstreams() []upstream {
 	endpoint := e.Config.RpcListenOn
 	if strings.HasPrefix(endpoint, ":") {
 		endpoint = "127.0.0.1" + endpoint

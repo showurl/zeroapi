@@ -6,7 +6,6 @@ import (
 	"github.com/fullstorydev/grpcurl"
 	"github.com/golang/protobuf/proto" //lint:ignore SA1019 we have to import this because it appears in exported API
 	"github.com/jhump/protoreflect/dynamic"
-	"github.com/showurl/zeroapi/xhttp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -53,7 +52,7 @@ func NewHandler(w http.ResponseWriter, source grpcurl.DescriptorSource, optionFs
 func (h *Handler) OnReceiveResponse(resp proto.Message) {
 	h.NumResponses++
 	code, msg, data := h.responseHandler(resp)
-	res := xhttp.XResponse{
+	res := XResponse{
 		Code:       int32(code),
 		Msg:        msg,
 		Data:       data,
@@ -66,7 +65,8 @@ func (h *Handler) OnReceiveResponse(resp proto.Message) {
 func (h *Handler) OnReceiveTrailers(stat *status.Status, md metadata.MD) {
 	h.Status = stat
 	if stat.Code() != codes.OK {
-		fmt.Fprintln(h.Out, defaultErrBuf)
+		respJsonStr := `{"msg":"服务繁忙，请稍后再试","code":-1}`
+		fmt.Fprintln(h.Out, respJsonStr)
 	}
 }
 
@@ -76,12 +76,69 @@ func (h *Handler) defaultResponseHandler(in proto.Message) (code int, msg string
 	} else {
 		message, ok := in.(*dynamic.Message)
 		if ok {
-			if failedReason := message.GetFieldByName("failedReason"); failedReason != nil {
-				if s, ok := failedReason.(string); ok && s != "" {
-					return -1, s, nil
+			if cod, exist := protoMessageValue(message, "errCode", 0); exist {
+				code = int(InterfaceToInt64(cod))
+			}
+			if failedReason, exist := protoMessageValue(message, "failedReason", ""); exist && failedReason != "" {
+				msg = failedReason.(string)
+				if code == 0 {
+					code = -1
+				}
+			}
+			data = in
+			return
+		}
+		return 0, "", in
+	}
+}
+
+func protoMessageValue(message *dynamic.Message, key string, defaultValue interface{}) (interface{}, bool) {
+	value, err := message.TryGetFieldByName(key)
+	if err != nil {
+		return defaultValue, false
+	}
+	if value == nil {
+		return defaultValue, true
+	}
+	return value, true
+}
+
+func BuildHandler(resp interface{}) ResponseHandler {
+	return func(in proto.Message) (code int, msg string, data interface{}) {
+		if in == nil {
+			return 0, "", nil
+		}
+		message, ok := in.(*dynamic.Message)
+		if ok {
+			if cod, exist := protoMessageValue(message, "errCode", 0); exist {
+				code = int(InterfaceToInt64(cod))
+			}
+			if failedReason, exist := protoMessageValue(message, "failedReason", ""); exist && failedReason != "" {
+				msg = failedReason.(string)
+				if code == 0 {
+					code = -1
 				}
 			}
 		}
-		return 0, "", in
+		bytes, err := proto.Marshal(in)
+		if err != nil {
+			return -1, err.Error(), nil
+		}
+		res := Copy(resp)
+		if m, ok := res.(proto.Message); ok {
+			err = proto.Unmarshal(bytes, m)
+		} else {
+			err = fmt.Errorf("response type %T is not proto.Message", res)
+		}
+		if err != nil {
+			return -1, err.Error(), nil
+		}
+		return code, msg, res
+	}
+}
+
+func WithBuildHandler(resp interface{}) OptionFunc {
+	return func(o *handlerOption) {
+		o.responseHandler = BuildHandler(resp)
 	}
 }

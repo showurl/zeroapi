@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/showurl/zeroapi/internal"
+	"github.com/zeromicro/go-zero/core/logx"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
 	"net/http"
@@ -13,7 +14,6 @@ import (
 	"github.com/fullstorydev/grpcurl"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/jhump/protoreflect/grpcreflect"
-	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/mr"
 	"github.com/zeromicro/go-zero/rest"
 	"github.com/zeromicro/go-zero/rest/httpx"
@@ -118,7 +118,11 @@ func (s *Server) buildHandler(source grpcurl.DescriptorSource, resolver jsonpb.A
 		if err := grpcurl.InvokeRPC(ctx, source, cli.Conn(), rpcPath, s.prepareMetadata(r.Header),
 			handler, parser.Next); err != nil {
 			httpx.Error(w, err, func(w http.ResponseWriter, err error) {
-				w.Write(defaultErrBuf)
+				respJsonStr := `{"msg":"服务繁忙，请稍后再试","code":-1}`
+				if err == internal.ParamErr {
+					respJsonStr = `{"msg":"参数错误","code":-1}`
+				}
+				w.Write([]byte(respJsonStr))
 			})
 		}
 	}

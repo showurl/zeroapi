@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"github.com/showurl/zeroapi"
 	"math/rand"
 	"time"
 
@@ -32,5 +31,5 @@ func (l *GreetLogic) Greet(in *pb.StreamReq) (*pb.StreamResp, error) {
 	if rand.Intn(2) == 0 {
 		failedReason = "随机失败"
 	}
-	return &pb.StreamResp{Greet: zeroapi.GetValueByKey(l.ctx, "User-Agent"), FailedReason: failedReason}, nil
+	return &pb.StreamResp{Greet: "your ip:" + in.Ip, FailedReason: failedReason}, nil
 }

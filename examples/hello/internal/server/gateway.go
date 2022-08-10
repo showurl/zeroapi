@@ -13,12 +13,7 @@ func (s *StreamGreeterServer) routeV1(group *zeroapi.GatewayEngine) {
 }
 
 func (s *StreamGreeterServer) Gateway() {
-	engine := zeroapi.Engine(rest.RestConf{
-		ServiceConf: s.svcCtx.Config.ServiceConf,
-		Host:        "0.0.0.0",
-		Port:        s.svcCtx.Config.Gateway.Port,
-		Timeout:     s.svcCtx.Config.Gateway.CallRpcTimeoutSeconds * 1000,
-	}, s.svcCtx.Config.Gateway, pb.ProtoSetCommon, pb.ProtoSetHello)
+	engine := zeroapi.Engine(s.svcCtx.Config.ServiceConf, s.svcCtx.Config.Gateway, pb.ProtoSetCommon, pb.ProtoSetHello)
 	s.routeV1(engine.Group("/hello/v1"))
 	svr := engine.Server(rest.WithCors())
 	svr.Use(middleware.PrintLog)

@@ -1,6 +1,7 @@
 package zeroapi
 
 import (
+	"github.com/zeromicro/go-zero/core/service"
 	"github.com/zeromicro/go-zero/rest"
 	"github.com/zeromicro/go-zero/zrpc"
 	"net/http"
@@ -32,7 +33,13 @@ func (r *router) add(s string, url string, rpcPath string, fs ...OptionFunc) {
 	})
 }
 
-func Engine(restConf rest.RestConf, conf Config, protoSets ...[]byte) *GatewayEngine {
+func Engine(serviceConf service.ServiceConf, conf Config, protoSets ...[]byte) *GatewayEngine {
+	restConf := rest.RestConf{
+		ServiceConf: serviceConf,
+		Host:        "0.0.0.0",
+		Port:        conf.Port,
+		Timeout:     conf.CallRpcTimeoutSeconds * 1000,
+	}
 	return &GatewayEngine{
 		RestConf:  restConf,
 		Config:    conf,
